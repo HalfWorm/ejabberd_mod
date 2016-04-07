@@ -28,8 +28,7 @@
 -include("logger.hrl").
 
 start(Host, Opts) ->
-	?INFO_MSG("Start mod_status_db ~p", [Host]),
-	?INFO_MSG("Start mod_status_db:Opts ~p", [Opts]),
+	?INFO_MSG("Start mod_status_db:Host: ~p~n Opts: ~p~n", [Host, Opts]),
 	clear_db(Host),
 	ejabberd_hooks:add(sm_register_connection_hook,		Host, ?MODULE, on_register_connection, 55),
 	ejabberd_hooks:add(sm_remove_connection_hook,		Host, ?MODULE, on_remove_connection, 55),
@@ -64,10 +63,8 @@ on_remove_connection(_SID, _JID, _SessionInfo) ->
 	ok.
 
 set_presence_hook(User, Server, Resource, Presence) ->
-	?INFO_MSG("mod_status_db Change Presence:~p", [User]),
-	?INFO_MSG("mod_status_db Change Presence:Presence~p", [Presence]),
+	?INFO_MSG("mod_status_db Change Presence: ~p~n Presence: ~p~n", [User,Presence]),
 	LServer = jid:nameprep(Server),
-	%%unconsult("/var/log/ejabberd/20.txt", [User],[Presence]),
 	case fxml:get_subtag(Presence, <<"show">>) of
 		false ->
 			LL = fxml:get_tag_attr_s(<<"show">>, Presence),

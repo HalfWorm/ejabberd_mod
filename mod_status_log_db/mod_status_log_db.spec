@@ -1,5 +1,5 @@
 author: "Aleksey Lavrov"
 category: "log"
-summary: "mod_status_db_log version 0.0.1"
+summary: "mod_status_db_log version 0.0.5"
 home: "-"
 url: "-"
