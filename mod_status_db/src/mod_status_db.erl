@@ -45,21 +45,28 @@ stop(Host) ->
 
 clear_db(Server) ->
 	?INFO_MSG("mod_status_db:clear_db ~p", [Server]),
-	catch ejabberd_odbc:sql_query(Server, [<<"UPDATE chatoperator SET status='Disconnected', showe=NULL, Resource=NULL WHERE node='">>, atom_to_binary(node(), utf8), <<"'">>]),
+	catch ejabberd_odbc:sql_query(Server, [<<"UPDATE chatoperator SET status='Disconnected', showe=NULL, Resource=NULL, pid=NULL \
+	WHERE node='">>, atom_to_binary(node(), utf8), <<"'">>]),
 	ok.
 
 on_register_connection(_SID, _JID, _Info) ->
 	{_A,User,Server,_C,_D,_E,_F} = _JID,
+        {{_C1,_C2,_C3},_C4} = _SID,
+        _PID = list_to_binary( pid_to_list( _C4 ) ),
 	?INFO_MSG("mod_status_db Connect:~p", [User]),
 	LServer =  jid:nameprep(Server),
-	catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET status='Connect', node='">>, atom_to_binary(node(), utf8), <<"' WHERE vclogin = '">>, User, <<"'">>]),
+	catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET status='Connect', node='">>, atom_to_binary(node(), utf8), <<"', pid='">>, _PID, <<"' \
+	WHERE vclogin = '">>, User, <<"'">>]),
 	ok.
 
 on_remove_connection(_SID, _JID, _SessionInfo) ->
 	{_A,User,Server,_C,_D,_E,_F} = _JID,
+        {{_C1,_C2,_C3},_C4} = _SID,
+        _PID = list_to_binary( pid_to_list( _C4 ) ),
 	?INFO_MSG("mod_status_db Disonnect:~p", [User]),
 	LServer =  jid:nameprep(Server),
-	catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET status='Disconnected', showe=NULL, Resource=NULL, node=NULL WHERE vclogin = '">>, User, <<"'">>]),
+	catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET status='Disconnected', showe=NULL, Resource=NULL, node=NULL, pid=NULL \
+	WHERE ( vclogin = '">>, User, <<"' and pid = '">>, _PID, <<"' )">>]),
 	ok.
 
 set_presence_hook(User, Server, Resource, Presence) ->

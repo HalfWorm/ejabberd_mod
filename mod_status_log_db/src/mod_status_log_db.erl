@@ -50,27 +50,34 @@ clear_db(Server) ->
 	ok.
 
 on_register_connection(_SID, _JID, _Info) ->
+	?INFO_MSG("mod_status_log_db:SID: ~p", [_SID]),
+	{{_C1,_C2,_C3},_C4} = _SID,
+	_PID = list_to_binary( pid_to_list( _C4 ) ),
 	{_A,User,Server,Resource,_D,_E,_F} = _JID,
 	%%[{_B1,{_IP,_Port}},{_B4,_B5},{_B6,_B7}] = _Info,
 	[{_B1,{{_IP1,_IP2,_IP3,_IP4},_Port}},{_B4,_B5},{_B6,_B7}] = _Info,
 	_IP = list_to_binary([ integer_to_binary(_IP1), ".", integer_to_binary(_IP2), ".", integer_to_binary(_IP3), ".", integer_to_binary(_IP4), ":", integer_to_binary(_Port) ]),
 	?INFO_MSG("mod_status_log_db Connect:~p", [User]),
 	LServer =  jid:nameprep(Server),
-	catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip) VALUES \
-	('">>, User, <<"', 'Connect', NULL, '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"')">>]),
+	catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip, pid) VALUES \
+	('">>, User, <<"', 'Connect', NULL, '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"', '">>, _PID, <<"' )">>]),
 	ok.
 
 on_remove_connection(_SID, _JID, _Info) ->
+	?INFO_MSG("mod_status_log_db:SID: ~p", [_SID]),
+        {{_C1,_C2,_C3},_C4} = _SID,
+	_PID = list_to_binary( pid_to_list( _C4 ) ),
 	{_A,User,Server,Resource,_D,_E,_F} = _JID,
 	[{_B1,{{_IP1,_IP2,_IP3,_IP4},_Port}},{_B4,_B5},{_B6,_B7}] = _Info,
 	_IP = list_to_binary([ integer_to_binary(_IP1), ".", integer_to_binary(_IP2), ".", integer_to_binary(_IP3), ".", integer_to_binary(_IP4), ":", integer_to_binary(_Port) ]),
 	?INFO_MSG("mod_status_log_db Disonnect:~p", [User]),
 	LServer =  jid:nameprep(Server),
-	catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip) VALUES \
-	('">>, User, <<"', 'Disconnected', NULL, '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"')">>]),
+	catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip, pid) VALUES \
+	('">>, User, <<"', 'Disconnected', NULL, '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"', '">>, _PID, <<"' )">>]),
 	ok.
 
 set_presence_hook(User, Server, Resource, Presence) ->
+%%	?INFO_MSG("mod_status_log_db:SID1: ~p", [_SID]),
 	?INFO_MSG("mod_status_log_db Change Presence:User:~p~n Resource:~p~n Presence:~p~n", [User, Resource, Presence]),
 	LServer = jid:nameprep(Server),
 	case fxml:get_subtag(Presence, <<"show">>) of
