@@ -28,7 +28,7 @@
 -include("logger.hrl").
 
 start(Host, Opts) ->
-	?INFO_MSG("Start mod_status_db:Host: ~p~n Opts: ~p~n", [Host, Opts]),
+	?INFO_MSG("Start mod_status_db:Host: ~p Opts: ~p", [Host, Opts]),
 	clear_db(Host),
 	ejabberd_hooks:add(sm_register_connection_hook,		Host, ?MODULE, on_register_connection, 55),
 	ejabberd_hooks:add(sm_remove_connection_hook,		Host, ?MODULE, on_remove_connection, 55),
@@ -70,15 +70,23 @@ on_remove_connection(_SID, _JID, _SessionInfo) ->
 	ok.
 
 set_presence_hook(User, Server, Resource, Presence) ->
-	?INFO_MSG("mod_status_db Change Presence: ~p~n Presence: ~p~n", [User,Presence]),
-	LServer = jid:nameprep(Server),
+%%	?INFO_MSG("mod_status_db Change Presence: ~p Presence: ~p", [User,Presence]),
+%%	LServer = jid:nameprep(Server),
+        LUser = jlib:nodeprep(User),
+        LServer = jlib:nodeprep(Server),
+        _C4 = ejabberd_sm:get_session_pid(LUser, LServer, Resource),
+        _PID = list_to_binary( pid_to_list( _C4 ) ),
+        ?INFO_MSG("mod_status_db Change Presence:User:~p Resource:~p Presence:~p Pid:~p", [User, Resource, Presence, _PID]),
+
 	case fxml:get_subtag(Presence, <<"show">>) of
 		false ->
 			LL = fxml:get_tag_attr_s(<<"show">>, Presence),
-			catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE vclogin = '">>, User, <<"'">>]);
+			%%catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE vclogin = '">>, User, <<"'">>]);
+			catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE pid = '">>, _PID, <<"'">>]);
 		_ ->
 			LL = fxml:get_tag_cdata(fxml:get_subtag(Presence, <<"show">>)),
-			catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE vclogin = '">>, User, <<"'">>])
+			%%catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE vclogin = '">>, User, <<"'">>])
+			catch ejabberd_odbc:sql_query(LServer, [<<"UPDATE chatoperator SET showe='">>, LL, <<"', Resource='">>, Resource, <<"', node='">>, atom_to_binary(node(), utf8), <<"' WHERE pid = '">>, _PID, <<"'">>])
 	end,
 	ok.
 

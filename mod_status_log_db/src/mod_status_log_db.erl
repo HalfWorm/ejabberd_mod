@@ -28,7 +28,7 @@
 -include("logger.hrl").
 
 start(Host, Opts) ->
-	?INFO_MSG("Start mod_status_log_db:Host: ~p~n Opts: ~p~n", [Host, Opts]),
+	?INFO_MSG("Start mod_status_log_db:Host: ~p Opts: ~p", [Host, Opts]),
 	clear_db(Host),
 	ejabberd_hooks:add(sm_register_connection_hook,		Host, ?MODULE, on_register_connection, 55),
 	ejabberd_hooks:add(sm_remove_connection_hook,		Host, ?MODULE, on_remove_connection, 55),
@@ -77,18 +77,23 @@ on_remove_connection(_SID, _JID, _Info) ->
 	ok.
 
 set_presence_hook(User, Server, Resource, Presence) ->
-%%	?INFO_MSG("mod_status_log_db:SID1: ~p", [_SID]),
-	?INFO_MSG("mod_status_log_db Change Presence:User:~p~n Resource:~p~n Presence:~p~n", [User, Resource, Presence]),
-	LServer = jid:nameprep(Server),
+	LUser = jlib:nodeprep(User),
+	LServer = jlib:nodeprep(Server),
+        _C4 = ejabberd_sm:get_session_pid(LUser, LServer, Resource),
+	_PID = list_to_binary( pid_to_list( _C4 ) ),
+	?INFO_MSG("mod_status_log_db Change Presence:User:~p Resource:~p Presence:~p Pid:~p", [User, Resource, Presence, _PID]),
+        %%_SID = ejabberd_sm:get_session(LUser, LServer, Resource),
+        %%?INFO_MSG("mod_status_log_db:set_presence_hook:SID: ~p", [_SID]),
+
 	case fxml:get_subtag(Presence, <<"show">>) of
 		false ->
 			LL = fxml:get_tag_attr_s(<<"show">>, Presence),
-			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource) VALUES \
-			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"')">>]);
+			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, pid) VALUES \
+			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _PID, <<"')">>]);
 		_ ->
 			LL = fxml:get_tag_cdata(fxml:get_subtag(Presence, <<"show">>)),
-			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource) VALUES \
-			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"')">>])
+			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, pid) VALUES \
+			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _PID, <<"')">>])
 	end,
 	ok.
 
