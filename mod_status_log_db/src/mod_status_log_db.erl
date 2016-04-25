@@ -27,6 +27,7 @@
 -include("ejabberd.hrl").
 -include("logger.hrl").
 
+
 start(Host, Opts) ->
 	?INFO_MSG("Start mod_status_log_db:Host: ~p Opts: ~p", [Host, Opts]),
 	clear_db(Host),
@@ -84,18 +85,24 @@ set_presence_hook(User, Server, Resource, Presence) ->
 	?INFO_MSG("mod_status_log_db Change Presence:User:~p Resource:~p Presence:~p Pid:~p", [User, Resource, Presence, _PID]),
         %%_SID = ejabberd_sm:get_session(LUser, LServer, Resource),
         %%?INFO_MSG("mod_status_log_db:set_presence_hook:SID: ~p", [_SID]),
+	_Info = ejabberd_sm:get_user_info(User, Server, Resource), 
+	?INFO_MSG("mod_status_log_db:set_presence_hook:Info: ~p", [_Info]),
+	[{_A1,_A2},{_B1,_B2},{_C1,{{_IP1,_IP2,_IP3,_IP4},_Port}}] = _Info,
+	_IP = list_to_binary([ integer_to_binary(_IP1), ".", integer_to_binary(_IP2), ".", integer_to_binary(_IP3), ".", integer_to_binary(_IP4), ":", integer_to_binary(_Port) ]),
+	?INFO_MSG("mod_status_log_db:set_presence_hook:IP: ~p", [_IP]),
 
 	case fxml:get_subtag(Presence, <<"show">>) of
 		false ->
 			LL = fxml:get_tag_attr_s(<<"show">>, Presence),
-			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, pid) VALUES \
-			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _PID, <<"')">>]);
+			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip, pid) VALUES \
+			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"', '">>, _PID, <<"')">>]);
 		_ ->
 			LL = fxml:get_tag_cdata(fxml:get_subtag(Presence, <<"show">>)),
-			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, pid) VALUES \
-			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _PID, <<"')">>])
+			catch ejabberd_odbc:sql_query(LServer, [<<"INSERT INTO chat_status_list (user, status, showe, node, resource, ip, pid) VALUES \
+			('">>, User, <<"', 'Connect', '">>, LL, <<"', '">>, atom_to_binary(node(), utf8), <<"', '">>, Resource, <<"', '">>, _IP, <<"', '">>, _PID, <<"')">>])
 	end,
 	ok.
+
 
 
 
