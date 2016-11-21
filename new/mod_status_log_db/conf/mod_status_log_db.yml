@@ -1,0 +1,6 @@
+modules:
+  mod_status_log_db:
+    db_type: sql
+    db_table: chat_status_list
+
+

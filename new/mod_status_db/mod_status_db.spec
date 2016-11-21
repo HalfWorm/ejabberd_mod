@@ -1,0 +1,5 @@
+author: "Aleksey Lavrov"
+category: "log"
+summary: "mod_status_db version 0.0.6"
+home: "-"
+url: "-"
